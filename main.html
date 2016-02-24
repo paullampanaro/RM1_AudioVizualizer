@@ -11,20 +11,142 @@
       "use strict";
 
       // variables
+      var NUM_SAMPLES = 256;
+      var SOUND_1 = 'media/New Adventure Theme.mp3';
+      var SOUND_2 = 'media/Peanuts Theme.mp3';
+      var SOUND_3 = 'media/The Picard Song.mp3';
+      var audioElement;
+      var analyserNode;
+      var canvas,ctx;
 
       function init(){
+        // set up canvas stuff
+	canvas = document.querySelector('canvas');
+	ctx = canvas.getContext("2d");
+	
+	// get reference to <audio> element on page
+	audioElement = document.querySelector('audio');
+	
+	// call our helper function and get an analyser node
+	analyserNode = createWebAudioContextWithAnalyserNode(audioElement);
+	
+	// get sound track <select> and Full Screen button working
+	setupUI();
+	
+	// load and play default sound into audio element
+	playStream(audioElement,SOUND_1);
+	
+	// start animation loop
+	update();
 
+      }
+      
+      function createWebAudioContextWithAnalyserNode(audioElement) {
+	var audioCtx, analyserNode, sourceNode;
+	audioCtx = new (window.AudioContext || window.webkitAudioContext);
+	
+	analyserNode = audioCtx.createAnalyser();
+       
+	// fft stands for Fast Fourier Transform
+	analyserNode.fftSize = NUM_SAMPLES;
+	
+	// this is where we hook up the <audio> element to the analyserNode
+	sourceNode = audioCtx.createMediaElementSource(audioElement); 
+	sourceNode.connect(analyserNode);
+	
+	// here we connect to the destination i.e. speakers
+	analyserNode.connect(audioCtx.destination);
+	return analyserNode;
+      }
+      
+      function setupUI(){
+        document.querySelector("#trackSelect").onchange = function(e){
+	  playStream(audioElement,e.target.value);
+	};
+	
+	document.querySelector("#fsButton").onclick = function(){
+	  requestFullscreen(canvas);
+	};
+      }
+      
+      function playStream(audioElement,path){
+	audioElement.src = path;
+	audioElement.play();
+	audioElement.volume = 0.2;
+	document.querySelector('#status').innerHTML = "Now playing: " + path;
       }
 
       // other methods
       function update(){
-
+	requestAnimationFrame(update);
+       
+	// create a new array of 8-bit integers (0-255)
+	var data = new Uint8Array(NUM_SAMPLES/2); 
+	
+	// populate the array with the frequency data
+	// notice these arrays can be passed "by reference" 
+        analyserNode.getByteFrequencyData(data);
+	
+	// OR
+	//analyserNode.getByteTimeDomainData(data); // waveform data
+	
+	// DRAW!
+	ctx.clearRect(0,0,900,400);  
+	var barWidth = 4;
+	var barSpacing = 1;
+        var barHeight = 100;
+	var topSpacing = 50;
+	
+	// loop through the data and draw!
+	for(var i=0; i<data.length; i++) { 
+	  ctx.fillStyle = 'rgba(0,255,0,0.6)'; 
+	  
+	  // the higher the amplitude of the sample (bin) the taller the bar
+	  // remember we have to draw our bars left-to-right and top-down
+	  ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth,barHeight); 
+	}
       }
+      
+      // HELPER
+      function makeColor(red, green, blue, alpha){
+      var color='rgba('+red+','+green+','+blue+', '+alpha+')';
+   	return color;
+      }
+      
+      // FULL SCREEN MODE
+      function requestFullscreen(element) {
+	if (element.requestFullscreen) {
+	  element.requestFullscreen();
+	} else if (element.mozRequestFullscreen) {
+	  element.mozRequestFullscreen();
+	} else if (element.mozRequestFullScreen) { 
+	  element.mozRequestFullScreen();
+	} else if (element.webkitRequestFullscreen) {
+	  element.webkitRequestFullscreen();
+	}
+      };
+      
+      function maniputlatePixels(){
+        
+      }
+      
+      window.addEventListener("load",init);
+      
     }());
   </script>
 </body>
   <canvas id="canvas" width="900" height="400">HTML5 required for this audio vizualizer!</canvas>
   <div id="controls">
+    <audio controls loop></audio>
+    <label>Track: 
+      <select id="trackSelect" >
+	<option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
+        <option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
+	<option value="media/The Picard Song.mp3">The Picard Song</option>
+      </select>
+    </label>
+    <button id="fsButton">Go Full Screen</button><br>
+    <p id="status">???</p>
   </div>
 </body>
 </html>
