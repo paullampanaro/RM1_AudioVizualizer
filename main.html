@@ -43,6 +43,7 @@
     // IFFE here
     (function(){
       "use strict";
+      window.onload = init;
 
       // variables
       var NUM_SAMPLES = 256;
@@ -95,24 +96,28 @@
 	  var TOOL_RECTANGLE = "toolRectangle";
 	  var TOOL_LINE = "toolLine";
 	  var TOOL_CIRCLE = "toolCircle";
-          var TOOL_TRIANGLE = "toolTriangle"
+      var TOOL_TRIANGLE = "toolTriangle"
 
       function init(){
         // set up canvas stuff
 		canvas = document.querySelector('canvas');
 		ctx = canvas.getContext("2d");
-		topCanvas = document.querySelector('#topCanvas');
-		topCtx = topCanvas.getContext('2d');
+
 		lineWidth = DEFAULT_LINE_WIDTH;
 		strokeStyle = DEFAULT_STROKE_STYLE;
 		fillStyle = DEFAULT_FILL_STYLE;
+		currentTool = TOOL_RECTANGLE;
+
+		origin = {};
+		topCanvas = document.querySelector('#topCanvas');
+		topCtx = topCanvas.getContext('2d');
 		
 		// set initial properties of the graphics context
 		topCtx.lineWidth = ctx.lineWidth = lineWidth;
 		topCtx.strokeStyle = ctx.strokeStyle = strokeStyle;
+		topCtx.fillStyle = ctx.fillStyle = fillStyle;
 		topCtx.lineCap = ctx.lineCap = "round";
 		topCtx.lineJoin = ctx.lineJoin = "round";
-		topCtx.fillStyle = ctx.fillStyle = fillStyle;
 		
 		//Hook up Event Listeners
 		canvas.onmousedown = doMousedown;
@@ -307,7 +312,7 @@
 			case TOOL_RECTANGLE:
 			case TOOL_LINE:
 			case TOOL_CIRCLE:
-                        case TOOL_TRIANGLE:
+            case TOOL_TRIANGLE:
 				origin.x = mouse.x;
 				origin.y = mouse.y;
 				break;
@@ -509,7 +514,7 @@
 				<option value="toolRectangle" selected>Rectangle</option>
 				<option value="toolLine">Line</option>
 				<option value="toolCircle">Circle</option>
-                                <option value="toolTriangle">Triangle</option>
+                <option value="toolTriangle">Triangle</option>
     		</select>
     	</label>
     	
