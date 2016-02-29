@@ -58,30 +58,33 @@
 	  var topCanvas;
 	  var topCtx;
 	  var objCircleArr = [];
-          var objRectArr = [];
-          var objTriArr = [];
+      var objRectArr = [];
+      var objTriArr = [];
 	  var maxRadius;
 	  var newCirc;
-          var newRect;
-          var newTri;
-	  var objCircle = function (radius, x, y, fillStyle) {
+      var newRect;
+      var newTri;
+	  var objCircle = function (radius, x, y, fillStyle, strokeStyle) {
 		this.radius = radius;
 		this.x = x;
 		this.y = y;
 		this.fillStyle = fillStyle;
+		this.strokeStyle = strokeStyle;
 	  }
-          var objRectangle = function (x, y, width, height, fillStyle) {
+      var objRectangle = function (x, y, width, height, fillStyle, strokeStyle) {
 		this.x = x;
 		this.y = y;
-                this.width = width;
-                this.height = height;
+        this.width = width;
+        this.height = height;
 		this.fillStyle = fillStyle;
+		this.strokeStyle = strokeStyle;
 	  }
-          var objTriangle = function (x, y, height, fillStyle) {
+        var objTriangle = function (x, y, height, fillStyle, strokeStyle) {
 		this.x = x;
 		this.y = y;
-                this.height = height;
+        this.height = height;
 		this.fillStyle = fillStyle;
+		this.strokeStyle = strokeStyle;
 	  }
 	  
 	  // CONSTANTS
@@ -223,38 +226,46 @@
 	  		//ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth,barHeight); 
 			
 			if (objCircleArr[0] != null) {
-                          for (var j = 0; j < objCircleArr.length; j++) {
+                for (var j = 0; j < objCircleArr.length; j++) {
 				 var percent = data[i] / 255;
 				 var circleRadius = percent * objCircleArr[j].radius;
 				 ctx.beginPath();
 				 ctx.fillStyle = objCircleArr[j].fillStyle;
+				 ctx.strokeStyle = objCircleArr[j].strokeStyle;
 				 ctx.globalAlpha = 0.1;
 				 ctx.arc(objCircleArr[j].x, objCircleArr[j].y, circleRadius, 0, 2 * Math.PI, false);
 				 ctx.fill();
+				 ctx.stroke();
 				 ctx.closePath();
-                          }
+                }
 			}
                         
-                        if (objRectArr[0] != null) {
-                          for (var j = 0; j < objRectArr.length; j++) {
-				 var percent = data[i] / 255;
-                                 var xPos = percent * objRectArr[j].x;
-                                 var yPos = percent * objRectArr[j].y;
-				 var width = percent * objRectArr[j].width;
-                                 var height = percent * objRectArr[j].height;
-				 ctx.fillStyle = objRectArr[j].fillStyle;
-				 ctx.globalAlpha = 0.1;
-                                 ctx.fillRect(xPos, yPos, width, height);
-                          }
+            if (objRectArr[0] != null) {
+                for (var j = 0; j < objRectArr.length; j++) {
+				 	var percent = data[i] / 255;
+                    var xPos = objRectArr[j].x;
+                    var yPos = objRectArr[j].y;
+				 	var width = percent * objRectArr[j].width;
+                    var height = percent * objRectArr[j].height;
+				 	ctx.fillStyle = objRectArr[j].fillStyle;
+				 	ctx.strokeStyle = objRectArr[j].strokeStyle;
+				 	ctx.globalAlpha = 0.1;
+				 	ctx.beginPath();
+                    ctx.rect(xPos - width/2, yPos - height/2, width, height);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
 			}
                         
-                        if (objTriArr[0] != null) {
-                          for (var j = 0; j < objTriArr.length; j++) {
-				 var percent = data[i] / 255;
-                                 var height = percent * objTriArr[j].height;
-				 ctx.globalAlpha = 0.1;
-                                 drawTriangle(objTriArr[j].x,objTriArr[j].y,height,objTriArr[j].fillStyle, ctx);
-                          }
+            if (objTriArr[0] != null) {
+                for (var j = 0; j < objTriArr.length; j++) {
+				 	var percent = data[i] / 255;
+                    var height = percent * objTriArr[j].height;
+				 	ctx.globalAlpha = 0.1;
+                    drawTriangle(objTriArr[j].x,objTriArr[j].y,height,objTriArr[j].fillStyle, objTriArr[j].strokeStyle, ctx);
+                    ctx.stroke();
+                }
 			}
 		}
       }
@@ -326,8 +337,8 @@
 			case TOOL_RECTANGLE:
 				var x = Math.min(mouse.x,origin.x);
 				var y = Math.min(mouse.y,origin.y);
-				var w = Math.abs(mouse.x - origin.x);
-				var h = Math.abs(mouse.y - origin.y);
+				var w = Math.abs(mouse.x - origin.x) * 2;
+				var h = Math.abs(mouse.y - origin.y) * 2;
 				
 				topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
@@ -335,9 +346,13 @@
 				
 				clearTopCanvas();
 				
-				topCtx.fillRect(x,y,w,h);
+				topCtx.beginPath();
+				topCtx.rect(x - w/2,y - h/2,w,h);
+				topCtx.closePath();
+				topCtx.fill();
+				topCtx.stroke();
                                 
-                                newRect = new objRectangle(x,y,w,h, topCtx.fillStyle);
+                newRect = new objRectangle(x,y,w,h, topCtx.fillStyle, topCtx.strokeStyle);
 				
 				break;
 				
@@ -370,23 +385,23 @@
 				topCtx.arc(origin.x, origin.y, rad2, 0, Math.PI * 2, false);
 				topCtx.closePath();
 				topCtx.fill();
-				newCirc = new objCircle(rad2, origin.x, origin.y, topCtx.fillStyle);
+				newCirc = new objCircle(rad2, origin.x, origin.y, topCtx.fillStyle, topCtx.strokeStyle);
 				break;
                         
-                        case TOOL_TRIANGLE:
-                                topCtx.strokeStyle = strokeStyle;
+                case TOOL_TRIANGLE:
+                topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
 				topCtx.lineWidth = lineWidth;
-                                var x = Math.abs(mouse.x - origin.x);
+                var x = Math.abs(mouse.x - origin.x);
 				var y = Math.abs(mouse.y - origin.y);
 				var h = x * x;
 				var w = y * y;
 				var rad = h + w;
 				var rad2  = Math.sqrt(rad);
                                 
-                                clearTopCanvas();
-				drawTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx);
-				newTri = new objTriangle(origin.x, origin.y, rad2, topCtx.fillStyle);
+                clearTopCanvas();
+				drawTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx);
+				newTri = new objTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle);
 				break;
 		}
 	}
@@ -458,14 +473,16 @@
 		topCtx.clearRect(0,0,topCtx.canvas.width,topCtx.canvas.height);
 	  }
           
-          function drawTriangle(x,y,height, fillstyle, ctx){
+      function drawTriangle(x,y,height, fillstyle, strokeStyle, ctx){
 		ctx.fillStyle = fillstyle;
+		ctx.strokeStyle = strokeStyle;
 		ctx.beginPath();
 		ctx.moveTo(x,y-height/2);
 		ctx.lineTo(x+height/2,y+height/2);
 		ctx.lineTo(x-height/2,y+height/2);
 		ctx.closePath();
 		ctx.fill();
+		ctx.stroke();
 	  }
       
       window.addEventListener("load",init);
