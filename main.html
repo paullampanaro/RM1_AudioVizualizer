@@ -19,8 +19,15 @@
       
       
        #controls {
-         z-index: 2;
-		  
+         z-index: 2;  
+      }
+
+      #imageControls {
+      	z-index: 2;
+      }
+
+      #audio {
+      	z-index: 2;
       }
       
       label{
@@ -109,7 +116,7 @@
 	  {
 	  	this.x += this.velX;
 	  	this.y += this.velY;
-	  	this.rotate += 0.0000001;
+	  	this.rotate += 0.01;
 
 	  	if(this.x > canvas.width || this.x < 0)
 	  	{
@@ -129,6 +136,8 @@
 		this.fillStyle = fillStyle;
 		this.strokeStyle = strokeStyle;
 
+		this.rotate = 0.0;
+
 		this.velX = (Math.random() - 0.5) * 0.1;
 		this.velY = (Math.random() - 0.5) * 0.1;
 	  }
@@ -137,6 +146,8 @@
 	  {
 	  	this.x += this.velX;
 	  	this.y += this.velY;
+
+	  	this.rotate -= 0.01;
 
 	  	if(this.x > canvas.width || this.x < 0)
 	  	{
@@ -148,6 +159,14 @@
 	  		this.velY = -this.velY;
 	  	}
 	  }
+
+		// variables for image manipulation
+		var invert = false;
+		var tintRed = false;
+		var noise = false;
+		var lines = false;
+		var threshold = false;
+		var thresholdValue = 0;
 	  
 	  // CONSTANTS
 	  var DEFAULT_LINE_WIDTH = 3;
@@ -258,6 +277,30 @@
 		document.querySelector('#backgroundColorChooser').onchange = function(e){
 			document.querySelector('#canvas').style.background = e.target.value;
 		}
+
+		document.querySelector('#slider2').onchange = function(e){
+			thresholdValue = e.target.value;
+		}
+
+		document.querySelector('#invert').onchange = function(e){
+			invert = !invert;
+		}
+
+		document.querySelector('#noise').onchange = function(e){
+			noise = !noise;
+		}
+
+		document.querySelector('#lines').onchange = function(e){
+			lines = !lines;
+		}
+
+		document.querySelector('#tintRed').onchange = function(e){
+			tintRed = !tintRed;
+		}
+
+		document.querySelector('#threshold').onchange = function(e){
+			threshold = !threshold;
+		}
       }
       
       function playStream(audioElement,path){
@@ -283,10 +326,6 @@
 	
 		// DRAW!
 		ctx.clearRect(0,0,canvas.width,canvas.height);  
-		var barWidth = canvas.width/data.length;
-		var barSpacing = 1;
-    	var barHeight = 100;
-		var topSpacing = 50;
 	
 		// loop through the data and draw!
 		for(var i=0; i<data.length; i++) { 
@@ -326,7 +365,7 @@
 				 	ctx.lineWidth = objRectArr[j].lineWidth;
 				 	ctx.save();
 				 	ctx.translate(xPos, yPos);
-				 	ctx.rotate(objRectArr[j].rotate * Math.PI * 180);
+				 	ctx.rotate(objRectArr[j].rotate * Math.PI / 180);
 				 	ctx.globalAlpha = 0.1;
 				 	ctx.beginPath();
                     ctx.rect(0 - width/2, 0 - height/2, width, height);
@@ -342,14 +381,96 @@
                 	objTriArr[j].wander();
 				 	var percent = data[i] / 255;
                     var height = percent * objTriArr[j].height;
+                    ctx.save();
+                    ctx.translate(objTriArr[j].x,objTriArr[j].y);
+                    ctx.rotate(objTriArr[j].rotate * Math.PI / 180);
 				 	ctx.globalAlpha = 0.1;
-                    drawTriangle(objTriArr[j].x,objTriArr[j].y,height,objTriArr[j].fillStyle, objTriArr[j].strokeStyle, objTriArr[j].lineWidth, ctx);
-                    ctx.stroke();
+                    drawTriangle(0,0,height,objTriArr[j].fillStyle, objTriArr[j].strokeStyle, objTriArr[j].lineWidth, ctx);
+                    ctx.restore();
                 }
 			}
 		}
+
+		manipulatePixels();
       }
-      
+
+      // based on ice 2: manipulate pixels
+		function manipulatePixels()
+		{
+			// get all of the rgba pixel data of the canvas by grabbing the ImageData object
+			var imageData = ctx.getImageData(0,0, canvas.width, canvas.height);
+			var data = imageData.data;
+			var length = data.length;
+			var width = imageData.width;
+
+			// iterate through each pixel, step by 4 so we can manipulate rgba for each pixel
+			for (var i = 0; i < length; i += 4)
+			{
+				// increase red value only
+				if(tintRed)
+				{
+					data[i] = data[i] + 100;
+				}
+
+				// invert every color channel
+				if(invert)
+				{
+					var red = data[i];
+					var green = data[i+1];
+					var blue = data[i+2];
+					data[i] = 255 - red;
+					data[i+1] = 255 - green;
+					data[i+2] = 255 - blue;
+					// leave alpha alone
+				}
+
+				// noise
+				if(noise && Math.random() < 0.10)
+				{
+					data[i] = data[i+1] = data[i+2] = 128; // gray noise
+
+					// data[i] = data[i+1] = data[i+2] = 255; // or white noise
+					// data[i] = data[i+1] = data[i+2] = 0; // or black noise
+
+					data[i+3] = 128 // alpha
+				}
+
+				// lines
+				if(lines)
+				{
+					var row = Math.floor(i/4/width);
+					if(row % 50 == 0)
+					{
+						// this row
+						data[i] = data[i+1] = data[i+2] = data[i+3] = 255;
+
+						// next row
+						data[i+(width*4)] = data[i+(width*4) + 1] = data[i+(width*4)+2] = data[i+(width*4)+3] = 255;
+					}
+				}
+
+				
+				if(threshold)
+				{
+					// apply threshold limit
+					for(var z = 0; z < 3; z++)
+					{
+						if(data[i + z] >= thresholdValue)
+						{
+							data[i + z] = 255;
+						}
+						else
+						{
+							data[i + z] = 0;
+						}
+					}
+				}
+			}
+
+			// put the modified data back on the canvas
+			ctx.putImageData(imageData, 0, 0);
+		}
+
       // HELPER
       function makeColor(red, green, blue, alpha){
       	var color='rgba('+red+','+green+','+blue+', '+alpha+')';
@@ -368,10 +489,6 @@
 	  		element.webkitRequestFullscreen();
 		}
       };
-      
-      function manipulatePixels(){
-        
-      }
 	  
 	  // EVENT CALLBACK FUNCTIONS
 	function doMousedown(e){
@@ -571,11 +688,11 @@
     }());
   </script>
 </body>
-  <canvas id="canvas" width="1600" height="900">HTML5 required for this audio vizualizer!</canvas>
-  <canvas id="topCanvas" width="1600" height="900">
+  <canvas id="canvas" width="900" height="600">HTML5 required for this audio vizualizer!</canvas>
+  <canvas id="topCanvas" width="900" height="600">
 	Get a real browser!
 	</canvas>
-  <div id="controls">
+  <div id="audio">
     <audio controls loop></audio>
     <label>Track: 
       <select id="trackSelect" >
@@ -584,7 +701,8 @@
 	<option value="media/The Picard Song.mp3">The Picard Song</option>
       </select>
     </label>
-	
+</div>
+<div id="controls">
 	<label>Tool:
 			<select id="toolChooser">
 				<option value="toolRectangle" selected>Rectangle</option>
@@ -645,5 +763,13 @@
     <button id="fsButton">Go Full Screen</button><br>
     <p id="status">???</p>
   </div>
+<div id="imageControls">
+	<input type="checkbox" id="threshold">Threshold</input>
+	<input id="slider2" type ="range" min="0" max="255" step ="1" value ="0"/>
+	<input type="checkbox" id="tintRed">Red Tint</input>
+	<input type="checkbox" id="invert">Invert</input>
+	<input type="checkbox" id="noise">Noise</input>
+	<input type="checkbox" id="lines">Lines</input>
+</div>
 </body>
 </html>
