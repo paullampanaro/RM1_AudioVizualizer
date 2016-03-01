@@ -30,6 +30,10 @@
       	z-index: 2;
       }
 
+      #motionControls{
+        z-index: 2;
+      }
+
       label{
       	font-size: 12px;
       	margin-right:0.75em;
@@ -116,7 +120,6 @@
 	  {
 	  	this.x += this.velX;
 	  	this.y += this.velY;
-	  	this.rotate += 0.01;
 
 	  	if(this.x > canvas.width || this.x < 0)
 	  	{
@@ -128,6 +131,11 @@
 	  		this.velY = -this.velY;
 	  	}
 	  }
+
+    objRectangle.prototype.spin = function()
+    {
+      this.rotate += 0.01;
+    }
 
         var objTriangle = function (x, y, height, fillStyle, strokeStyle, lineWeight) {
 		this.x = x;
@@ -147,8 +155,6 @@
 	  	this.x += this.velX;
 	  	this.y += this.velY;
 
-	  	this.rotate -= 0.01;
-
 	  	if(this.x > canvas.width || this.x < 0)
 	  	{
 	  		this.velX = -this.velX;
@@ -160,13 +166,21 @@
 	  	}
 	  }
 
+    objTriangle.prototype.spin = function()
+    {
+      this.rotate -= 0.01;
+    }
+
 		// variables for image manipulation
 		var invert = false;
-		var tintRed = false;
 		var noise = false;
-		var lines = false;
 		var threshold = false;
 		var thresholdValue = 0;
+    var dataType = false;
+
+    // variables for motion and rotation
+    var wander = false;
+    var spin = false;
 
 	  // CONSTANTS
 	  var DEFAULT_LINE_WIDTH = 3;
@@ -290,18 +304,22 @@
 			noise = !noise;
 		}
 
-		document.querySelector('#lines').onchange = function(e){
-			lines = !lines;
-		}
-
-		document.querySelector('#tintRed').onchange = function(e){
-			tintRed = !tintRed;
-		}
-
 		document.querySelector('#threshold').onchange = function(e){
 			threshold = !threshold;
+    }
+
+    document.querySelector('#rotate').onchange = function(e){
+  		spin = !spin;
+    }
+
+    document.querySelector('#motion').onchange = function(e){
+    	wander = !wander;
 		}
-      }
+
+    document.querySelector('#dataType').onchange = function(e){
+      dataType = !dataType;
+    }
+  }
 
       function playStream(audioElement,path){
 		audioElement.src = path;
@@ -319,10 +337,16 @@
 
 		// populate the array with the frequency data
 		// notice these arrays can be passed "by reference"
-        analyserNode.getByteFrequencyData(data);
 
-		// OR
-		//analyserNode.getByteTimeDomainData(data); // waveform data
+    if(!dataType)
+    {
+      analyserNode.getByteFrequencyData(data);
+    }
+    else
+    {
+      analyserNode.getByteTimeDomainData(data); // waveform data
+    }
+
 
 		// DRAW!
 		ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -337,7 +361,11 @@
 
 			if (objCircleArr[0] != null) {
                 for (var j = 0; j < objCircleArr.length; j++) {
-                objCircleArr[j].wander();
+
+        if(wander)
+        {
+          objCircleArr[j].wander();
+        }
 				 var percent = data[i] / 255;
 				 var circleRadius = percent * objCircleArr[j].radius;
 				 ctx.beginPath();
@@ -354,7 +382,15 @@
 
             if (objRectArr[0] != null) {
                 for (var j = 0; j < objRectArr.length; j++) {
-                	objRectArr[j].wander();
+
+                  if(wander)
+                  {
+                    objRectArr[j].wander();
+                  }
+                  if(spin)
+                  {
+                    objRectArr[j].spin();
+                  }
 				 	var percent = data[i] / 255;
                     var xPos = objRectArr[j].x;
                     var yPos = objRectArr[j].y;
@@ -378,7 +414,14 @@
 
             if (objTriArr[0] != null) {
                 for (var j = 0; j < objTriArr.length; j++) {
-                	objTriArr[j].wander();
+                  if(wander)
+                  {
+                    objTriArr[j].wander();
+                  }
+                  if(spin)
+                  {
+                    objTriArr[j].spin();
+                  }
 				 	var percent = data[i] / 255;
                     var height = percent * objTriArr[j].height;
                     ctx.save();
@@ -391,7 +434,7 @@
 			}
 		}
 
-		// manipulatePixels();
+		manipulatePixels();
       }
 
       // based on ice 2: manipulate pixels
@@ -406,12 +449,6 @@
 			// iterate through each pixel, step by 4 so we can manipulate rgba for each pixel
 			for (var i = 0; i < length; i += 4)
 			{
-				// increase red value only
-				if(tintRed)
-				{
-					data[i] = data[i] + 100;
-				}
-
 				// invert every color channel
 				if(invert)
 				{
@@ -434,21 +471,6 @@
 
 					data[i+3] = 128 // alpha
 				}
-
-				// lines
-				if(lines)
-				{
-					var row = Math.floor(i/4/width);
-					if(row % 50 == 0)
-					{
-						// this row
-						data[i] = data[i+1] = data[i+2] = data[i+3] = 255;
-
-						// next row
-						data[i+(width*4)] = data[i+(width*4) + 1] = data[i+(width*4)+2] = data[i+(width*4)+3] = 255;
-					}
-				}
-
 
 				if(threshold)
 				{
@@ -701,6 +723,10 @@
 	<option value="media/The Picard Song.mp3">The Picard Song</option>
       </select>
     </label>
+    <select id="dataType">
+      <option>Frequency Data</option>
+      <option>Waveform Data</option>
+    </select>
 </div>
 <div id="controls">
 	<label>Tool:
@@ -750,7 +776,6 @@
     		</select>
     	</label>
         <label>Background Color:
-          <!--
 			<select id="backgroundColorChooser">
 				<option value="red">Red</option>
 				<option value="green">Green</option>
@@ -760,19 +785,26 @@
         		<option value="black" selected>Black</option>
                 <option value="white">White</option>
     		</select>
-      -->
-      <input id="backgroundColorChooser" type="color" value="black">
     	</label>
     <button id="fsButton">Go Full Screen</button><br>
     <p id="status">???</p>
   </div>
+  <div id="motionControls">
+    <input type="checkbox" id="rotate">Spin</input>
+    <input type="checkbox" id="motion">Bounce</input>
+  </div>
+  <!--
+  <div>Color Pickers for some Browsers
+    <input name="Stroke Color" class="strokeStyleChooser" type="color" value="#FFFFFF">
+    <input name="Fill Color" class="fillStyleChooser" type="color" value="#FFFFFF">
+    <input name="Background Color" class="backgroundColorChooser" type="color" value="#FFFFFF">
+  </div>
+-->
 <div id="imageControls">
 	<input type="checkbox" id="threshold">Threshold</input>
 	<input id="slider2" type ="range" min="0" max="255" step ="1" value ="0"/>
-	<input type="checkbox" id="tintRed">Red Tint</input>
 	<input type="checkbox" id="invert">Invert</input>
 	<input type="checkbox" id="noise">Noise</input>
-	<input type="checkbox" id="lines">Lines</input>
 </div>
 </body>
 </html>
