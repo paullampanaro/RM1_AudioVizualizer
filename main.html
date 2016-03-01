@@ -11,7 +11,6 @@
 
       #canvas {
          background: black;
-         position:absolute;
          z-index: 0;
          left: 10px;
          top: 10px;
@@ -20,8 +19,7 @@
       
       
        #controls {
-         position: absolute;
-          z-index: 2;
+         z-index: 2;
 		  
       }
       
@@ -65,27 +63,90 @@
 	  var newCirc;
       var newRect;
       var newTri;
-	  var objCircle = function (radius, x, y, fillStyle, strokeStyle) {
+	  var objCircle = function(radius, x, y, fillStyle, strokeStyle, lineWeight) {
+
 		this.radius = radius;
 		this.x = x;
 		this.y = y;
 		this.fillStyle = fillStyle;
 		this.strokeStyle = strokeStyle;
+
+		this.velX = (Math.random() - 0.5) * 0.1;
+		this.velY = (Math.random() - 0.5) * 0.1;
 	  }
-      var objRectangle = function (x, y, width, height, fillStyle, strokeStyle) {
+
+	  objCircle.prototype.wander = function()
+	  {
+	  	this.x += this.velX;
+	  	this.y += this.velY;
+
+	  	if(this.x > canvas.width || this.x < 0)
+	  	{
+	  		this.velX = -this.velX;
+	  	}
+
+	  	if(this.y > canvas.height || this.y < 0)
+	  	{
+	  		this.velY = -this.velY;
+	  	}
+	  }
+
+      var objRectangle = function (x, y, width, height, fillStyle, strokeStyle, lineWeight) {
 		this.x = x;
 		this.y = y;
         this.width = width;
         this.height = height;
 		this.fillStyle = fillStyle;
 		this.strokeStyle = strokeStyle;
+
+		this.rotate = 0.0;
+
+		this.velX = (Math.random() - 0.5) * 0.1;
+		this.velY = (Math.random() - 0.5) * 0.1;
 	  }
-        var objTriangle = function (x, y, height, fillStyle, strokeStyle) {
+
+	  objRectangle.prototype.wander = function()
+	  {
+	  	this.x += this.velX;
+	  	this.y += this.velY;
+	  	this.rotate += 0.0000001;
+
+	  	if(this.x > canvas.width || this.x < 0)
+	  	{
+	  		this.velX = -this.velX;
+	  	}
+
+	  	if(this.y > canvas.height || this.y < 0)
+	  	{
+	  		this.velY = -this.velY;
+	  	}
+	  }
+
+        var objTriangle = function (x, y, height, fillStyle, strokeStyle, lineWeight) {
 		this.x = x;
 		this.y = y;
         this.height = height;
 		this.fillStyle = fillStyle;
 		this.strokeStyle = strokeStyle;
+
+		this.velX = (Math.random() - 0.5) * 0.1;
+		this.velY = (Math.random() - 0.5) * 0.1;
+	  }
+
+	  objTriangle.prototype.wander = function()
+	  {
+	  	this.x += this.velX;
+	  	this.y += this.velY;
+
+	  	if(this.x > canvas.width || this.x < 0)
+	  	{
+	  		this.velX = -this.velX;
+	  	}
+
+	  	if(this.y > canvas.height || this.y < 0)
+	  	{
+	  		this.velY = -this.velY;
+	  	}
 	  }
 	  
 	  // CONSTANTS
@@ -196,7 +257,6 @@
                 // background color chooser
 		document.querySelector('#backgroundColorChooser').onchange = function(e){
 			document.querySelector('#canvas').style.background = e.target.value;
-                        console.log("background color=" + e.target.value);
 		}
       }
       
@@ -238,11 +298,13 @@
 			
 			if (objCircleArr[0] != null) {
                 for (var j = 0; j < objCircleArr.length; j++) {
+                objCircleArr[j].wander();
 				 var percent = data[i] / 255;
 				 var circleRadius = percent * objCircleArr[j].radius;
 				 ctx.beginPath();
 				 ctx.fillStyle = objCircleArr[j].fillStyle;
 				 ctx.strokeStyle = objCircleArr[j].strokeStyle;
+				 ctx.lineWidth = objCircleArr[j].lineWidth;
 				 ctx.globalAlpha = 0.1;
 				 ctx.arc(objCircleArr[j].x, objCircleArr[j].y, circleRadius, 0, 2 * Math.PI, false);
 				 ctx.fill();
@@ -253,6 +315,7 @@
                         
             if (objRectArr[0] != null) {
                 for (var j = 0; j < objRectArr.length; j++) {
+                	objRectArr[j].wander();
 				 	var percent = data[i] / 255;
                     var xPos = objRectArr[j].x;
                     var yPos = objRectArr[j].y;
@@ -260,21 +323,27 @@
                     var height = percent * objRectArr[j].height;
 				 	ctx.fillStyle = objRectArr[j].fillStyle;
 				 	ctx.strokeStyle = objRectArr[j].strokeStyle;
+				 	ctx.lineWidth = objRectArr[j].lineWidth;
+				 	ctx.save();
+				 	ctx.translate(xPos, yPos);
+				 	ctx.rotate(objRectArr[j].rotate * Math.PI * 180);
 				 	ctx.globalAlpha = 0.1;
 				 	ctx.beginPath();
-                    ctx.rect(xPos - width/2, yPos - height/2, width, height);
+                    ctx.rect(0 - width/2, 0 - height/2, width, height);
                     ctx.closePath();
                     ctx.fill();
                     ctx.stroke();
+                    ctx.restore();
                 }
 			}
                         
             if (objTriArr[0] != null) {
                 for (var j = 0; j < objTriArr.length; j++) {
+                	objTriArr[j].wander();
 				 	var percent = data[i] / 255;
                     var height = percent * objTriArr[j].height;
 				 	ctx.globalAlpha = 0.1;
-                    drawTriangle(objTriArr[j].x,objTriArr[j].y,height,objTriArr[j].fillStyle, objTriArr[j].strokeStyle, ctx);
+                    drawTriangle(objTriArr[j].x,objTriArr[j].y,height,objTriArr[j].fillStyle, objTriArr[j].strokeStyle, objTriArr[j].lineWidth, ctx);
                     ctx.stroke();
                 }
 			}
@@ -328,7 +397,7 @@
  	function doMousemove(e) {
  		// bail out if the mouse button is not down
 		if(! dragging) return;
-		
+
 		// get location of mouse in canvas in coordinates
 		var mouse = getMouse(e);
 		
@@ -363,7 +432,7 @@
 				topCtx.fill();
 				topCtx.stroke();
                                 
-                newRect = new objRectangle(x,y,w,h, topCtx.fillStyle, topCtx.strokeStyle);
+                newRect = new objRectangle(x,y,w,h, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
 				
 				break;
 				
@@ -396,7 +465,7 @@
 				topCtx.arc(origin.x, origin.y, rad2, 0, Math.PI * 2, false);
 				topCtx.closePath();
 				topCtx.fill();
-				newCirc = new objCircle(rad2, origin.x, origin.y, topCtx.fillStyle, topCtx.strokeStyle);
+				newCirc = new objCircle(rad2, origin.x, origin.y, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
 				break;
                         
                 case TOOL_TRIANGLE:
@@ -411,9 +480,9 @@
 				var rad2  = Math.sqrt(rad);
                                 
                 clearTopCanvas();
-				drawTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx);
-				newTri = new objTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle);
-				break;
+				drawTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth, topCtx);
+				newTri = new objTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
+				break;	
 		}
 	}
 	
@@ -484,9 +553,10 @@
 		topCtx.clearRect(0,0,topCtx.canvas.width,topCtx.canvas.height);
 	  }
           
-      function drawTriangle(x,y,height, fillstyle, strokeStyle, ctx){
+      function drawTriangle(x,y,height, fillstyle, strokeStyle, lineWidth, ctx){
 		ctx.fillStyle = fillstyle;
 		ctx.strokeStyle = strokeStyle;
+		ctx.lineWidth = lineWidth;
 		ctx.beginPath();
 		ctx.moveTo(x,y-height/2);
 		ctx.lineTo(x+height/2,y+height/2);
@@ -558,6 +628,7 @@
         		<option value="yellow">Yellow</option>
 				<option value="purple">Purple</option>
         		<option value="black">Black</option>
+        		<option value="white">White</option>
     		</select>
     	</label>
         <label>Background Color: 
@@ -568,7 +639,7 @@
         		<option value="yellow">Yellow</option>
 				<option value="purple">Purple</option>
         		<option value="black" selected>Black</option>
-                        <option value="white">White</option>
+                <option value="white">White</option>
     		</select>
     	</label>
     <button id="fsButton">Go Full Screen</button><br>
