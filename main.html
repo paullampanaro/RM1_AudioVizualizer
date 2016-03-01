@@ -16,10 +16,10 @@
          top: 10px;
          box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
       }
-      
-      
+
+
        #controls {
-         z-index: 2;  
+         z-index: 2;
       }
 
       #imageControls {
@@ -29,12 +29,12 @@
       #audio {
       	z-index: 2;
       }
-      
+
       label{
       	font-size: 12px;
       	margin-right:0.75em;
       }
-	  
+
 	  #topCanvas{
 		background: rgba(0,0,0,0);
 		position: absolute;
@@ -167,7 +167,7 @@
 		var lines = false;
 		var threshold = false;
 		var thresholdValue = 0;
-	  
+
 	  // CONSTANTS
 	  var DEFAULT_LINE_WIDTH = 3;
 	  var DEFAULT_STROKE_STYLE = "red";
@@ -191,88 +191,88 @@
 		origin = {};
 		topCanvas = document.querySelector('#topCanvas');
 		topCtx = topCanvas.getContext('2d');
-		
+
 		// set initial properties of the graphics context
 		topCtx.lineWidth = ctx.lineWidth = lineWidth;
 		topCtx.strokeStyle = ctx.strokeStyle = strokeStyle;
 		topCtx.fillStyle = ctx.fillStyle = fillStyle;
 		topCtx.lineCap = ctx.lineCap = "round";
 		topCtx.lineJoin = ctx.lineJoin = "round";
-		
+
 		//Hook up Event Listeners
 		canvas.onmousedown = doMousedown;
 		canvas.onmousemove = doMousemove;
 		canvas.onmouseup = doMouseup;
 		canvas.onmouseout = doMouseout;
-		
+
 		topCanvas.onmousedown = doMousedown;
 		topCanvas.onmousemove = doMousemove;
 		topCanvas.onmouseup = doMouseup;
 		topCanvas.onmouseout = doMouseout;
-	
+
 		// get reference to <audio> element on page
 		audioElement = document.querySelector('audio');
-	
+
 		// call our helper function and get an analyser node
 		analyserNode = createWebAudioContextWithAnalyserNode(audioElement);
-	
+
 		// get sound track <select> and Full Screen button working
 		setupUI();
-	
+
 		// load and play default sound into audio element
 		playStream(audioElement,SOUND_1);
-	
+
 		// start animation loop
 		update();
 
       }
-      
+
       function createWebAudioContextWithAnalyserNode(audioElement) {
 
 		var audioCtx, analyserNode, sourceNode;
 		audioCtx = new (window.AudioContext || window.webkitAudioContext);
-	
+
 		analyserNode = audioCtx.createAnalyser();
-       
+
 		// fft stands for Fast Fourier Transform
 		analyserNode.fftSize = NUM_SAMPLES;
-	
+
 		// this is where we hook up the <audio> element to the analyserNode
-		sourceNode = audioCtx.createMediaElementSource(audioElement); 
+		sourceNode = audioCtx.createMediaElementSource(audioElement);
 		sourceNode.connect(analyserNode);
-	
+
 		// here we connect to the destination i.e. speakers
 		analyserNode.connect(audioCtx.destination);
 		return analyserNode;
       }
-      
+
       function setupUI(){
         document.querySelector("#trackSelect").onchange = function(e){
 	  		playStream(audioElement,e.target.value);
 		};
-	
+
 		document.querySelector("#fsButton").onclick = function(){
 	  		requestFullscreen(canvas);
 		};
-		
+
 		// color dropdown
 		document.querySelector('#strokeStyleChooser').onchange = doStrokeStyleChange;
-		
+
 		// line width dropdown
 		document.querySelector('#lineWidthChooser').onchange = doLineWidthChange;
-		
+
 		// tool chooser
 		document.querySelector('#toolChooser').onchange = function(e){
 			currentTool = e.target.value;
 			console.log("currentTool=" + currentTool);
 		}
-		
+
 		// fill style chooser
 		document.querySelector('#fillStyleChooser').onchange = function(e){
 			fillStyle = e.target.value;
 			console.log("fillStyle=" + fillStyle);
 		}
-                
+
                 // background color chooser
 		document.querySelector('#backgroundColorChooser').onchange = function(e){
 			document.querySelector('#canvas').style.background = e.target.value;
@@ -302,7 +302,7 @@
 			threshold = !threshold;
 		}
       }
-      
+
       function playStream(audioElement,path){
 		audioElement.src = path;
 		audioElement.play();
@@ -313,28 +313,28 @@
       // other methods
       function update(){
 		requestAnimationFrame(update);
-       
+
 		// create a new array of 8-bit integers (0-255)
-		var data = new Uint8Array(NUM_SAMPLES/2); 
-	
+		var data = new Uint8Array(NUM_SAMPLES/2);
+
 		// populate the array with the frequency data
-		// notice these arrays can be passed "by reference" 
+		// notice these arrays can be passed "by reference"
         analyserNode.getByteFrequencyData(data);
-	
+
 		// OR
 		//analyserNode.getByteTimeDomainData(data); // waveform data
-	
+
 		// DRAW!
-		ctx.clearRect(0,0,canvas.width,canvas.height);  
-	
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+
 		// loop through the data and draw!
-		for(var i=0; i<data.length; i++) { 
-	  		ctx.fillStyle = 'rgba(0,255,0,1.0)'; 
-	  
+		for(var i=0; i<data.length; i++) {
+	  		ctx.fillStyle = 'rgba(0,255,0,1.0)';
+
 	  		// the higher the amplitude of the sample (bin) the taller the bar
 	  		// remember we have to draw our bars left-to-right and top-down
-	  		//ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth,barHeight); 
-			
+	  		//ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth,barHeight);
+
 			if (objCircleArr[0] != null) {
                 for (var j = 0; j < objCircleArr.length; j++) {
                 objCircleArr[j].wander();
@@ -351,7 +351,7 @@
 				 ctx.closePath();
                 }
 			}
-                        
+
             if (objRectArr[0] != null) {
                 for (var j = 0; j < objRectArr.length; j++) {
                 	objRectArr[j].wander();
@@ -375,7 +375,7 @@
                     ctx.restore();
                 }
 			}
-                        
+
             if (objTriArr[0] != null) {
                 for (var j = 0; j < objTriArr.length; j++) {
                 	objTriArr[j].wander();
@@ -391,7 +391,7 @@
 			}
 		}
 
-		manipulatePixels();
+		// manipulatePixels();
       }
 
       // based on ice 2: manipulate pixels
@@ -449,7 +449,7 @@
 					}
 				}
 
-				
+
 				if(threshold)
 				{
 					// apply threshold limit
@@ -476,31 +476,31 @@
       	var color='rgba('+red+','+green+','+blue+', '+alpha+')';
    		return color;
       }
-      
+
       // FULL SCREEN MODE
       function requestFullscreen(element) {
 		if (element.requestFullscreen) {
 	  		element.requestFullscreen();
 		} else if (element.mozRequestFullscreen) {
 	  		element.mozRequestFullscreen();
-		} else if (element.mozRequestFullScreen) { 
+		} else if (element.mozRequestFullScreen) {
 	  		element.mozRequestFullScreen();
 		} else if (element.webkitRequestFullscreen) {
 	  		element.webkitRequestFullscreen();
 		}
       };
-	  
+
 	  // EVENT CALLBACK FUNCTIONS
 	function doMousedown(e){
 		dragging = true;
 		var mouse = getMouse(e);
-		
+
 		switch(currentTool) {
 			case TOOL_PENCIL:
 				ctx.beginPath();
 				ctx.moveTo(mouse.x, mouse.y);
 				break;
-			
+
 			case TOOL_RECTANGLE:
 			case TOOL_LINE:
 			case TOOL_CIRCLE:
@@ -510,54 +510,54 @@
 				break;
 		}
 	}
- 
+
  	function doMousemove(e) {
  		// bail out if the mouse button is not down
 		if(! dragging) return;
 
 		// get location of mouse in canvas in coordinates
 		var mouse = getMouse(e);
-		
+
 		switch(currentTool) {
 			case TOOL_PENCIL:
 				//PENCIL TOOL
 				ctx.lineWidth = lineWidth;
 				ctx.strokeStyle = strokeStyle;
-		
+
 				// draw a line to x,y of mouse
 				ctx.lineTo(mouse.x, mouse.y);
-		
+
 				// stroke that line bro
 				ctx.stroke();
 				break;
-			
+
 			case TOOL_RECTANGLE:
 				var x = Math.min(mouse.x,origin.x);
 				var y = Math.min(mouse.y,origin.y);
 				var w = Math.abs(mouse.x - origin.x) * 2;
 				var h = Math.abs(mouse.y - origin.y) * 2;
-				
+
 				topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
 				topCtx.lineWidth = lineWidth;
-				
+
 				clearTopCanvas();
-				
+
 				topCtx.beginPath();
 				topCtx.rect(x - w/2,y - h/2,w,h);
 				topCtx.closePath();
 				topCtx.fill();
 				topCtx.stroke();
-                                
+
                 newRect = new objRectangle(x,y,w,h, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
-				
+
 				break;
-				
+
 			case TOOL_LINE:
 				topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
 				topCtx.lineWidth = lineWidth;
-				
+
 				clearTopCanvas();
 				topCtx.beginPath();
 				topCtx.moveTo(origin.x, origin.y);
@@ -565,7 +565,7 @@
 				topCtx.closePath();
 				topCtx.stroke();
 				break;
-			
+
 			case TOOL_CIRCLE:
 				topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
@@ -576,7 +576,7 @@
 				var w = y * y;
 				var rad = h + w;
 				var rad2  = Math.sqrt(rad);
-				
+
 				clearTopCanvas();
 				topCtx.beginPath();
 				topCtx.arc(origin.x, origin.y, rad2, 0, Math.PI * 2, false);
@@ -584,7 +584,7 @@
 				topCtx.fill();
 				newCirc = new objCircle(rad2, origin.x, origin.y, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
 				break;
-                        
+
                 case TOOL_TRIANGLE:
                 topCtx.strokeStyle = strokeStyle;
 				topCtx.fillStyle = fillStyle;
@@ -595,14 +595,14 @@
 				var w = y * y;
 				var rad = h + w;
 				var rad2  = Math.sqrt(rad);
-                                
+
                 clearTopCanvas();
 				drawTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth, topCtx);
 				newTri = new objTriangle(origin.x, origin.y, rad2, topCtx.fillStyle, topCtx.strokeStyle, topCtx.lineWidth);
-				break;	
+				break;
 		}
 	}
-	
+
 	function doMouseup(e) {
 		switch(currentTool){
 			case TOOL_PENCIL:
@@ -623,7 +623,7 @@
 					objCircleArr.push(newCirc);
 				}
 				break;
-                        
+
                         case TOOL_TRIANGLE:
 				if(dragging){
 					ctx.drawImage(topCanvas,0,0);
@@ -634,7 +634,7 @@
 		}
 		dragging = false;
 	}
-	
+
 	// if the user drags out of the canvas
 	function doMouseout(e) {
 		switch(currentTool){
@@ -650,26 +650,26 @@
 		}
 		dragging = false;
 	}
-	  
+
 	  function getMouse(e){
 		var mouse = {}
 		mouse.x = e.pageX - e.target.offsetLeft;
 		mouse.y = e.pageY - e.target.offsetTop;
 		return mouse;
 	  }
-	  
+
 	  function doLineWidthChange(e){
 		lineWidth = e.target.value;
 	  }
-	
+
 	  function doStrokeStyleChange(e){
 		strokeStyle = e.target.value;
 	  }
-	
+
 	  function clearTopCanvas(){
 		topCtx.clearRect(0,0,topCtx.canvas.width,topCtx.canvas.height);
 	  }
-          
+
       function drawTriangle(x,y,height, fillstyle, strokeStyle, lineWidth, ctx){
 		ctx.fillStyle = fillstyle;
 		ctx.strokeStyle = strokeStyle;
@@ -682,9 +682,9 @@
 		ctx.fill();
 		ctx.stroke();
 	  }
-      
+
       window.addEventListener("load",init);
-      
+
     }());
   </script>
 </body>
@@ -694,7 +694,7 @@
 	</canvas>
   <div id="audio">
     <audio controls loop></audio>
-    <label>Track: 
+    <label>Track:
       <select id="trackSelect" >
 	<option value="media/New Adventure Theme.mp3">Intro - Macklemore</option>
         <option value="media/Peanuts Theme.mp3">Peanut's Theme</option>
@@ -711,8 +711,8 @@
                 <option value="toolTriangle">Triangle</option>
     		</select>
     	</label>
-    	
-		<label>Stroke Color: 
+
+		<label>Stroke Color:
 			<select id="strokeStyleChooser">
 				<option value="red" selected>Red</option>
 				<option value="green">Green</option>
@@ -722,8 +722,8 @@
         		<option value="black">Black</option>
     		</select>
     	</label>
-		
-    	<label>Line Width: 
+
+    	<label>Line Width:
 			<select id="lineWidthChooser">
 				<option value="1">1</option>
 				<option value="2">2</option>
@@ -737,8 +737,8 @@
         		<option value="10">10</option>
     		</select>
     	</label>
-		
-		<label>Fill Color: 
+
+		<label>Fill Color:
 			<select id="fillStyleChooser">
 				<option value="red">Red</option>
 				<option value="green">Green</option>
@@ -749,7 +749,8 @@
         		<option value="white">White</option>
     		</select>
     	</label>
-        <label>Background Color: 
+        <label>Background Color:
+          <!--
 			<select id="backgroundColorChooser">
 				<option value="red">Red</option>
 				<option value="green">Green</option>
@@ -759,6 +760,8 @@
         		<option value="black" selected>Black</option>
                 <option value="white">White</option>
     		</select>
+      -->
+      <input id="backgroundColorChooser" type="color" value="black">
     	</label>
     <button id="fsButton">Go Full Screen</button><br>
     <p id="status">???</p>
